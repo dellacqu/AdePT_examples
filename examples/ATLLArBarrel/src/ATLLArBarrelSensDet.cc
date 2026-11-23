@@ -26,6 +26,7 @@
 const G4String ATLLArBarrelSensDet::fFrontHitsCollectionName  = "FrontHitsCollectionName";
 const G4String ATLLArBarrelSensDet::fBackHitsCollectionName   = "BackHitsCollectionName";
 const G4String ATLLArBarrelSensDet::fMiddleHitsCollectionName = "MiddleHitsCollectionName";
+const G4String ATLLArBarrelSensDet::fSensDetName              = "LArSD";
 
 ATLLArBarrelSensDet::ATLLArBarrelSensDet(const G4String &name)
     : G4VSensitiveDetector(name), fFrontHitsCollection(nullptr), fMiddleHitsCollection(nullptr),
@@ -68,6 +69,11 @@ void ATLLArBarrelSensDet::Initialize(G4HCofThisEvent *HCE)
   HCE->AddHitsCollection(fMiddleHCID, fMiddleHitsCollection);
   HCE->AddHitsCollection(fBackHCID, fBackHitsCollection);
 
+  // Reset the per-event boundary diagnostics
+  //
+  fEdepCrossCell    = 0.;
+  fEdepCrossSection = 0.;
+
   // Allocate fixed number of hits
   //
   for (std::size_t i = 0; i < ATLLArBarrelTBConstants::FrontHitNo; i++) {
@@ -96,60 +102,31 @@ G4bool ATLLArBarrelSensDet::ProcessHits(G4Step *aStep, G4TouchableHistory *th)
   //         "Dep(MeV) "<< aStep->GetTotalEnergyDeposit() << " " <<
   //         "Mat "     << aStep->GetPreStepPoint()->GetMaterial()->GetName() << " " << G4endl;
 
-  // Get hit Eta, Theta, Phi and Magnitude values
+  // Find the readout cell of the pre-step point. Steps with no deposit or outside the readout
+  // (eta < 0, eta >= 0.8, i.e. only the A side, or phi outside the module, because the
+  // DeltaPhi of the single module does not contain the accordion tips entirely) are skipped
   //
-  auto Eta   = aStep->GetPreStepPoint()->GetPosition().eta();
-  auto Theta = aStep->GetPreStepPoint()->GetPosition().theta(); // rad
-  auto Phi   = aStep->GetPreStepPoint()->GetPosition().phi();   // rad
-  auto Edep  = aStep->GetTotalEnergyDeposit();
-  auto R     = aStep->GetPreStepPoint()->GetPosition().mag(); // mm
-
-  // If Edep==0 or Eta<0. or Eta>0.8 (i.e. only A secion allowed) do not process hit
-  //
-  if (Edep == 0. || Eta < ATLLArBarrelTBConstants::EtaMin || Eta >= ATLLArBarrelTBConstants::EtaChange) return false;
-  // If Phi>halfSTACBarrel or Phi<-halfSTACBarrel do not process hit,
-  // this is needed because of the accordion geometry of one only module,
-  // i.e. the DeltaPhi does not contain entirely the accordion tips
-  //
-  if (Phi >= ATLLArBarrelTBConstants::halfSTACDeltaPhi || Phi < (-ATLLArBarrelTBConstants::halfSTACDeltaPhi))
-    return false;
+  auto Edep = aStep->GetTotalEnergyDeposit();
+  if (Edep == 0.) return false;
+  const Cell pre = FindCell(aStep->GetPreStepPoint()->GetPosition());
+  if (!pre.inside) return false;
   const G4double EdepNoBirks = Edep;
   Edep                       = ApplyBirks(Edep, aStep->GetStepLength() / 10.);
 
-  // Calculate depth of hit inside STAC
-  //
-  const G4double Depth = R - (ATLLArBarrelTBConstants::RMinSTAC / std::sin(Theta));
-  ATLLArBarrelTBConstants::STACSection Section;
-  G4double DeltaEta   = 0.;
-  G4double DeltaPhi   = 0.;
-  G4double EtasPerRow = 0.;
-  if (Depth < ATLLArBarrelTBConstants::FrontDepth) {
-    Section    = ATLLArBarrelTBConstants::STACSection::Front;
-    DeltaEta   = ATLLArBarrelTBConstants::FrontDeltaEta;
-    DeltaPhi   = ATLLArBarrelTBConstants::FrontDeltaPhi;
-    EtasPerRow = ATLLArBarrelTBConstants::FrontEtasPerRow;
-  } else if (Depth < ATLLArBarrelTBConstants::MiddleDepth) {
-    Section    = ATLLArBarrelTBConstants::STACSection::Middle;
-    DeltaEta   = ATLLArBarrelTBConstants::MiddleDeltaEta;
-    DeltaPhi   = ATLLArBarrelTBConstants::MiddleDeltaPhi;
-    EtasPerRow = ATLLArBarrelTBConstants::MiddleEtasPerRow;
-  } else {
-    Section    = ATLLArBarrelTBConstants::STACSection::Back;
-    DeltaEta   = ATLLArBarrelTBConstants::BackDeltaEta;
-    DeltaPhi   = ATLLArBarrelTBConstants::BackDeltaPhi;
-    EtasPerRow = ATLLArBarrelTBConstants::BackEtasPerRow;
-  }
-
-  // Calculate Eta and Phi index
-  // max EtaIdx value = 256, max PhiIdx value = 16
-  //
-  G4int EtaIdx = std::floor(Eta / DeltaEta);
-  G4int PhiIdx = std::floor((Phi + ATLLArBarrelTBConstants::halfSTACDeltaPhi) / DeltaPhi);
-
-  // Calculate hit index in collection
-  //
-  G4int HitID = PhiIdx * EtasPerRow + EtaIdx;
+  const auto Section  = pre.section;
+  const G4int EtaIdx  = pre.etaIdx;
+  const G4int PhiIdx  = pre.phiIdx;
+  const G4int HitID   = pre.hitID;
+  const auto DeltaEta = pre.deltaEta;
+  const auto DeltaPhi = pre.deltaPhi;
   CheckHitID(Section, HitID); // throws fatal exception if >=MaxHitNo
+
+  // Boundary diagnostics: the whole deposit goes to the pre-step cell, also when the step ends
+  // in another cell or section
+  //
+  const Cell post = FindCell(aStep->GetPostStepPoint()->GetPosition());
+  if (!post.inside || post.section != Section || post.hitID != HitID) fEdepCrossCell += Edep;
+  if (post.inside && post.section != Section) fEdepCrossSection += Edep;
 
   // Get hit according to section and HitID
   //
@@ -186,6 +163,47 @@ G4bool ATLLArBarrelSensDet::ProcessHits(G4Step *aStep, G4TouchableHistory *th)
   }
 
   return true;
+}
+
+ATLLArBarrelSensDet::Cell ATLLArBarrelSensDet::FindCell(const G4ThreeVector &position) const
+{
+
+  Cell cell;
+  const auto Eta   = position.eta();
+  const auto Phi   = position.phi();   // rad
+  const auto Theta = position.theta(); // rad
+  if (Eta < ATLLArBarrelTBConstants::EtaMin || Eta >= ATLLArBarrelTBConstants::EtaChange) return cell;
+  if (Phi >= ATLLArBarrelTBConstants::halfSTACDeltaPhi || Phi < (-ATLLArBarrelTBConstants::halfSTACDeltaPhi))
+    return cell;
+
+  // Depth inside STAC
+  //
+  const G4double Depth = position.mag() - (ATLLArBarrelTBConstants::RMinSTAC / std::sin(Theta));
+  G4double EtasPerRow  = 0.;
+  if (Depth < ATLLArBarrelTBConstants::FrontDepth) {
+    cell.section  = ATLLArBarrelTBConstants::STACSection::Front;
+    cell.deltaEta = ATLLArBarrelTBConstants::FrontDeltaEta;
+    cell.deltaPhi = ATLLArBarrelTBConstants::FrontDeltaPhi;
+    EtasPerRow    = ATLLArBarrelTBConstants::FrontEtasPerRow;
+  } else if (Depth < ATLLArBarrelTBConstants::MiddleDepth) {
+    cell.section  = ATLLArBarrelTBConstants::STACSection::Middle;
+    cell.deltaEta = ATLLArBarrelTBConstants::MiddleDeltaEta;
+    cell.deltaPhi = ATLLArBarrelTBConstants::MiddleDeltaPhi;
+    EtasPerRow    = ATLLArBarrelTBConstants::MiddleEtasPerRow;
+  } else {
+    cell.section  = ATLLArBarrelTBConstants::STACSection::Back;
+    cell.deltaEta = ATLLArBarrelTBConstants::BackDeltaEta;
+    cell.deltaPhi = ATLLArBarrelTBConstants::BackDeltaPhi;
+    EtasPerRow    = ATLLArBarrelTBConstants::BackEtasPerRow;
+  }
+
+  // Eta and Phi index (max EtaIdx value = 256, max PhiIdx value = 16) and index in the collection
+  //
+  cell.etaIdx = std::floor(Eta / cell.deltaEta);
+  cell.phiIdx = std::floor((Phi + ATLLArBarrelTBConstants::halfSTACDeltaPhi) / cell.deltaPhi);
+  cell.hitID  = cell.phiIdx * EtasPerRow + cell.etaIdx;
+  cell.inside = true;
+  return cell;
 }
 
 void ATLLArBarrelSensDet::EndOfEvent(G4HCofThisEvent *) {}

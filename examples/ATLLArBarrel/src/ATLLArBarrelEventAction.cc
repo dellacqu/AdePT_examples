@@ -43,9 +43,12 @@
 ATLLArBarrelEventAction::ATLLArBarrelEventAction() : G4UserEventAction(), fHasHadronInteracted(false)
 {
 
-  fFrontHitsEdepVector  = std::vector<G4double>(ATLLArBarrelTBConstants::FrontHitNo, 0.);
-  fMiddleHitsEdepVector = std::vector<G4double>(ATLLArBarrelTBConstants::MiddleHitNo, 0.);
-  fBackHitsEdepVector   = std::vector<G4double>(ATLLArBarrelTBConstants::BackHitNo, 0.);
+  fFrontHitsEdepVector         = std::vector<G4double>(ATLLArBarrelTBConstants::FrontHitNo, 0.);
+  fMiddleHitsEdepVector        = std::vector<G4double>(ATLLArBarrelTBConstants::MiddleHitNo, 0.);
+  fBackHitsEdepVector          = std::vector<G4double>(ATLLArBarrelTBConstants::BackHitNo, 0.);
+  fFrontHitsEdepNoNoiseVector  = fFrontHitsEdepVector;
+  fMiddleHitsEdepNoNoiseVector = fMiddleHitsEdepVector;
+  fBackHitsEdepNoNoiseVector   = fBackHitsEdepVector;
 }
 
 ATLLArBarrelEventAction::~ATLLArBarrelEventAction() {}
@@ -108,6 +111,12 @@ void ATLLArBarrelEventAction::EndOfEventAction(const G4Event *event)
   for (std::size_t n = 0; n < ATLLArBarrelTBConstants::BackHitNo; ++n)
     fBackHitsEdepVector[n] = (*BackHC)[n]->GetEdep();
 
+  // Keep the cells before the noise (the vectors keep their size, so the ntuple references stay valid)
+  //
+  fFrontHitsEdepNoNoiseVector  = fFrontHitsEdepVector;
+  fMiddleHitsEdepNoNoiseVector = fMiddleHitsEdepVector;
+  fBackHitsEdepNoNoiseVector   = fBackHitsEdepVector;
+
   // Total energy before adding the noise: Birks-corrected and without Birks correction
   //
   const G4double EnergyNoNoise = std::accumulate(fFrontHitsEdepVector.begin(), fFrontHitsEdepVector.end(), 0.) +
@@ -148,6 +157,17 @@ void ATLLArBarrelEventAction::EndOfEventAction(const G4Event *event)
   AnalysisManager->FillNtupleDColumn(5, EnergyNoNoise);
   AnalysisManager->FillNtupleDColumn(6, EnergyNoBirks);
   AnalysisManager->FillNtupleIColumn(7, event->GetEventID());
+  // Columns 8, 9 and 10 are the noise-free hits vectors, filled automatically by AddNtupleRow()
+  // Boundary diagnostics of the sensitive detector (energy of steps ending in another cell / section)
+  auto LArSD = dynamic_cast<ATLLArBarrelSensDet *>(
+      G4SDManager::GetSDMpointer()->FindSensitiveDetector(ATLLArBarrelSensDet::fSensDetName));
+  if (!LArSD) {
+    G4ExceptionDescription msg;
+    msg << "Cannot find the sensitive detector " << ATLLArBarrelSensDet::fSensDetName;
+    G4Exception("ATLLArBarrelEventAction::EndOfEventAction()", "MyCode0005", FatalException, msg);
+  }
+  AnalysisManager->FillNtupleDColumn(11, LArSD->GetEdepCrossCell());
+  AnalysisManager->FillNtupleDColumn(12, LArSD->GetEdepCrossSection());
   AnalysisManager->AddNtupleRow(); // this automatically allocated entried with vectors in root file
 
 // Printout event hits information for debugging

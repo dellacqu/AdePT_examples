@@ -39,6 +39,9 @@ public:
   std::vector<G4double> &GetFrontHitsEdepVector() { return fFrontHitsEdepVector; };
   std::vector<G4double> &GetMiddleHitsEdepVector() { return fMiddleHitsEdepVector; };
   std::vector<G4double> &GetBackHitsEdepVector() { return fBackHitsEdepVector; };
+  std::vector<G4double> &GetFrontHitsEdepNoNoiseVector() { return fFrontHitsEdepNoNoiseVector; };
+  std::vector<G4double> &GetMiddleHitsEdepNoNoiseVector() { return fMiddleHitsEdepNoNoiseVector; };
+  std::vector<G4double> &GetBackHitsEdepNoNoiseVector() { return fBackHitsEdepNoNoiseVector; };
 
   // Method to modify and get fHasHadronInteracted
   //
@@ -55,6 +58,12 @@ private:
   std::vector<G4double> fFrontHitsEdepVector;
   std::vector<G4double> fMiddleHitsEdepVector;
   std::vector<G4double> fBackHitsEdepVector;
+
+  // The same cells before the electronic noise is added (Birks-corrected)
+  //
+  std::vector<G4double> fFrontHitsEdepNoNoiseVector;
+  std::vector<G4double> fMiddleHitsEdepNoNoiseVector;
+  std::vector<G4double> fBackHitsEdepNoNoiseVector;
 
   // Boolean to store if the primary hadron has interacted
   //

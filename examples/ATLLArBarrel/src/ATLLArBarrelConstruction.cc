@@ -87,7 +87,7 @@ void ATLLArBarrelConstruction::ConstructSDandField()
 
   // Sensitive detectors
   //
-  auto LArSD = new ATLLArBarrelSensDet("LArSD");
+  auto LArSD = new ATLLArBarrelSensDet(ATLLArBarrelSensDet::fSensDetName);
   G4SDManager::GetSDMpointer()->AddNewDetector(LArSD);
 
   // Assign to logical volume

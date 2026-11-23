@@ -17,6 +17,7 @@
 // Includers from Geant4
 //
 #include "G4VSensitiveDetector.hh"
+#include "G4ThreeVector.hh"
 
 // Forward declarations from Geant4
 //
@@ -45,8 +46,36 @@ public:
   static const G4String fFrontHitsCollectionName;
   static const G4String fMiddleHitsCollectionName;
   static const G4String fBackHitsCollectionName;
+  static const G4String fSensDetName;
+
+  // Boundary diagnostics of the current event (Birks-corrected energy, MeV).
+  // Each step's deposit goes to the cell and section of its pre-step point; these sums give the
+  // energy of the steps whose post-step point lies in another cell (or outside the readout),
+  // and in another section (front/middle/back). Reset in Initialize(), i.e. at every event.
+  //
+  G4double GetEdepCrossCell() const { return fEdepCrossCell; }
+  G4double GetEdepCrossSection() const { return fEdepCrossSection; }
 
 private:
+  // Readout cell of a point: section, eta and phi indices and index in the hits collection.
+  // inside is false outside the readout (eta < 0, eta >= 0.8 or phi outside the module)
+  //
+  struct Cell {
+    G4bool inside                                = false;
+    ATLLArBarrelTBConstants::STACSection section = ATLLArBarrelTBConstants::STACSection::Front;
+    G4int etaIdx                                 = -1;
+    G4int phiIdx                                 = -1;
+    G4int hitID                                  = -1;
+    G4double deltaEta                            = 0.;
+    G4double deltaPhi                            = 0.;
+  };
+  Cell FindCell(const G4ThreeVector &position) const;
+
+  // Per-event sums of the boundary diagnostics (not per-track state)
+  //
+  G4double fEdepCrossCell    = 0.;
+  G4double fEdepCrossSection = 0.;
+
   // Pointer to hits collections allocated ("new") at each event
   //
   ATLLArBarrelHitsCollection *fFrontHitsCollection;

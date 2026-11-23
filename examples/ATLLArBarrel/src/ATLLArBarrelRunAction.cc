@@ -50,6 +50,13 @@ ATLLArBarrelRunAction::ATLLArBarrelRunAction(ATLLArBarrelEventAction *evtAction)
   analysisManager->CreateNtupleDColumn("EnergyLArNoNoise"); // Birks-corrected, no electronic noise
   analysisManager->CreateNtupleDColumn("EnergyLArNoBirks"); // no Birks correction, no electronic noise
   analysisManager->CreateNtupleIColumn("EventID");          // merged rows are not in event order
+  // Cells without electronic noise (Birks-corrected); mostly exact zeros, so they compress well
+  analysisManager->CreateNtupleDColumn("FrontHitsEdepNoNoise", fEventAction->GetFrontHitsEdepNoNoiseVector());
+  analysisManager->CreateNtupleDColumn("MiddleHitsEdepNoNoise", fEventAction->GetMiddleHitsEdepNoNoiseVector());
+  analysisManager->CreateNtupleDColumn("BackHitsEdepNoNoise", fEventAction->GetBackHitsEdepNoNoiseVector());
+  // Boundary diagnostics: energy of steps whose post-step point is in another cell, or another section
+  analysisManager->CreateNtupleDColumn("EnergyCrossCell");
+  analysisManager->CreateNtupleDColumn("EnergyCrossSection");
   analysisManager->FinishNtuple();
 }
 
