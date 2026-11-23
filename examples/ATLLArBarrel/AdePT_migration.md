@@ -464,9 +464,10 @@ EM-option guard, the option B constructor and the default cut.
   `FTFP_BERT_EM0` and `Shielding_LEND` are accepted; `FTFP_BERT_EMZ` and `QGSP_BIC__GS` are refused.
   `G4StrUtil` comes with `G4String.hh`, and `G4Exception` is already available through `globals.hh`.
 - `SetDefaultCutValue(0.01*mm)` makes the validated production cut the default of the AdePT build. A
-  `/run/setCut` placed **before** `/run/initialize` still overrides it. It removes the most dangerous pitfall:
-  +1.4 % energy in the LAr with the cut after initialisation. Without this line the default cut would be the
-  FTFP_BERT 0.7 mm. If the CPU builds should have the same default, move the line out of `#ifdef USE_ADEPT`.
+  `/run/setCut` placed **before** `/run/initialize` still overrides it. This is **not** a fix for the cut problem
+  of the Rules below ([AdePT#745](https://github.com/apt-sim/AdePT/issues/745)): it only makes a late `/run/setCut 0.01 mm` harmless, because the GPU
+  already has that value. A late request for any other value is still ignored on the GPU. Without this line the
+  default cut would be the FTFP_BERT 0.7 mm. If the CPU builds should have the same default, move the line out of `#ifdef USE_ADEPT`.
   This changes the original CPU behaviour for macros that do not set a cut.
 - Nothing else in `main()` changes. `G4MTRunManager` is fine: AdePT is designed for multithreaded runs and
   shares one GPU between all worker threads. The thread count (`-t`) is one of the main performance knobs
@@ -613,11 +614,16 @@ only on the GPU. After the fixes, repeat the validation of step 8: the energy sh
 
 1. **All `/adept/` commands go before `/run/initialize`.** Afterwards they are refused or ignored, because AdePT
    allocates the GPU memory and copies the geometry and the physics tables at initialisation.
-2. **`/run/setCut` goes before `/run/initialize`.** This was the most important finding of the GPU validation.
-   With the original order (`/run/initialize`, then `/run/setCut 0.01 mm`), the GPU kept the default cut, and
-   AdePT deposited **+1.4 %** more energy in the LAr (`Results.md` 3c). With the cut first, AdePT agrees with the
-   CPU to better than 0.2 %. The CPU builds give the same result with both orders, so changing the existing macros
-   is harmless.
+2. **`/run/setCut` goes before `/run/initialize`, and the cuts must not change afterwards.** This was the most
+   important finding of the GPU validation. With the original order (`/run/initialize`, then `/run/setCut 0.01 mm`),
+   the GPU kept the default cut, and AdePT deposited **+1.4 %** more energy in the LAr (`Results.md` 3c). With the
+   cut first, AdePT agrees with the CPU to better than 0.2 %. The CPU builds give the same result with both orders,
+   so changing the existing macros is harmless.
+
+   **Known limitation of AdePT** (0.4.2 and master as of November 2026, [AdePT#745](https://github.com/apt-sim/AdePT/issues/745)): AdePT builds its GPU
+   physics tables only once. Any later cut change (`/run/setCut` or `/run/setCutForRegion` after
+   `/run/initialize`, or between two `/run/beamOn`) updates the CPU tables but not the GPU ones, with no warning.
+   Geant4 allows these commands, so the macro order is the only protection until the issue is fixed.
 3. Without option B of step 2, every AdePT macro needs `/adept/setTrackInAllRegions true` (or `/adept/addGPURegion`)
    and `/adept/SetEnergyLossFluctuation true`. Otherwise nothing goes to the GPU, or the energy-loss fluctuations
    are off while FTFP_BERT has them on.
@@ -742,8 +748,9 @@ macros in `analysis/`.
 
 Ordered by impact, all observed in this project:
 
-1. **`/run/setCut` after `/run/initialize`:** +1.4 % energy in the LAr on the GPU, and no warning. Fixed by the
-   macro order and by `SetDefaultCutValue` (step 3).
+1. **`/run/setCut` after `/run/initialize`:** +1.4 % energy in the LAr on the GPU, and no warning. This is an AdePT
+   limitation ([AdePT#745](https://github.com/apt-sim/AdePT/issues/745)), not fixed: avoided here by the macro order (Rules, item 2).
+   `SetDefaultCutValue` (step 3) only covers a late request for 0.01 mm.
 2. **Missing `/adept/setTrackInAllRegions true`:** nothing runs on the GPU. The run looks normal, just slow.
    Fixed by option B (step 2).
 3. **Energy-loss fluctuations off by default in AdePT:** different physics from the CPU lists. Fixed by option B or
