@@ -140,10 +140,9 @@ int main(int argc, char **argv)
   }
   G4cout << "--> Using AdePT for e-, e+ and gamma" << G4endl;
   physicsList->ReplacePhysics(new ATLLArBarrelEmPhysics_AdePT());
-  // Production cut used for the validation, applied before the GPU tables are built
-  // (a /run/setCut after /run/initialize does not reach the GPU, Results.md section 3c);
-  // a /run/setCut before /run/initialize still overrides it
-  physicsList->SetDefaultCutValue(0.01 * mm);
+  // No default production cut is set here, so the CPU and AdePT builds use the same one.
+  // Set /run/setCut in the macro, before /run/initialize: later cut changes do not
+  // reach the GPU tables (AdePT issue #745, Results.md section 3c)
 #endif
   runManager->SetUserInitialization(physicsList);
 #endif

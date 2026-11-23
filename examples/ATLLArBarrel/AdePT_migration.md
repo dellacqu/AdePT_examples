@@ -8,7 +8,7 @@ electrons, positrons and photons on an NVIDIA GPU with [AdePT](https://github.co
 - **Target:** AdePT 0.4.3, released 2026-11-17. AdePT 0.4.2 also works with the same code. It is the
   version validated on the GPU machine in `Results.md`, section 3.
 - **What the current repository already has:** `master` of the original repository (`d91769b`, imported
-  here) contains a working minimal migration (commits `8099cac`, `a6297c3`, `c5dd2bd`, `ac0e2df`). The rest (option B, default cut, CMake
+  here) contains a working minimal migration (commits `8099cac`, `a6297c3`, `c5dd2bd`, `ac0e2df`). The rest (option B, CMake
   check, macros) was added here on 2026-11-19, so every step below is now applied (✅). The guide can still be followed
   step by step from the original code.
 - **How it was checked:** this guide was written on a Mac without an NVIDIA GPU, against the AdePT 0.4.3 and
@@ -418,7 +418,7 @@ original `WITH_G4HepEm` physics list has no γ/e-nuclear processes and is 0.4 % 
 ## Step 3 – main(): `ATLLArBarrel.cc`
 
 Changes relative to the original `main()`. Lines marked `+` are new. All of them are now in the project ✅: the
-EM-option guard, the option B constructor and the default cut.
+EM-option guard and the option B constructor.
 
 ```cpp
  #ifdef USE_G4HepEm
@@ -450,9 +450,6 @@ EM-option guard, the option B constructor and the default cut.
 +    }
 +    G4cout<<"--> Using AdePT for e-, e+ and gamma"<<G4endl;
 +    physicsList->ReplacePhysics( new ATLLArBarrelEmPhysics_AdePT() );
-+    //Production cut used for the validation, applied before the GPU tables are built
-+    //(a /run/setCut after /run/initialize does not reach the GPU, Results.md section 3c)
-+    physicsList->SetDefaultCutValue( 0.01*mm );
 +    #endif
      runManager->SetUserInitialization(physicsList);
      #endif
@@ -463,12 +460,11 @@ EM-option guard, the option B constructor and the default cut.
 - The guard was compiled and tested with Geant4 11.4.3 (`Review.md` 7.3). `FTFP_BERT`, `QGSP_BERT_HP`,
   `FTFP_BERT_EM0` and `Shielding_LEND` are accepted; `FTFP_BERT_EMZ` and `QGSP_BIC__GS` are refused.
   `G4StrUtil` comes with `G4String.hh`, and `G4Exception` is already available through `globals.hh`.
-- `SetDefaultCutValue(0.01*mm)` makes the validated production cut the default of the AdePT build. A
-  `/run/setCut` placed **before** `/run/initialize` still overrides it. This is **not** a fix for the cut problem
-  of the Rules below ([AdePT#745](https://github.com/apt-sim/AdePT/issues/745)): it only makes a late `/run/setCut 0.01 mm` harmless, because the GPU
-  already has that value. A late request for any other value is still ignored on the GPU. Without this line the
-  default cut would be the FTFP_BERT 0.7 mm. If the CPU builds should have the same default, move the line out of `#ifdef USE_ADEPT`.
-  This changes the original CPU behaviour for macros that do not set a cut.
+- `main()` does **not** set a default production cut. An earlier version set `SetDefaultCutValue(0.01*mm)` in the
+  AdePT build only. It was removed because it gave the AdePT build a different default from the CPU builds
+  (0.01 mm instead of the FTFP_BERT 0.7 mm), and because it did not fix the cut problem of the Rules below
+  ([AdePT#745](https://github.com/apt-sim/AdePT/issues/745)): it only hid a late `/run/setCut 0.01 mm`. The cut is set in the macros, before
+  `/run/initialize`; a macro without `/run/setCut` uses 0.7 mm in every build.
 - Nothing else in `main()` changes. `G4MTRunManager` is fine: AdePT is designed for multithreaded runs and
   shares one GPU between all worker threads. The thread count (`-t`) is one of the main performance knobs
   (step 8).
@@ -669,9 +665,9 @@ the run and stay valid with option A.
 
 | Macro | Change for AdePT |
 |---|---|
-| `run.mac` | use `run_adept.mac` above (cut moved before init, `/adept/` block) |
-| `runcards/benchmarks/electron50GeV.mac`, `gamma5GeV.mac` | ✅ `*_adept.mac` versions exist |
-| `runcards/run.mac`, `single.mac`, `init.mac` | no change needed ✅: option B sets the AdePT defaults in code, and no cut is set, so the default of step 3 applies (0.01 mm; the CPU build keeps 0.7 mm) |
+| `run.mac` | ✅ cut moved before init (it now runs correctly with AdePT too); `run_adept.mac` above adds the `/adept/` block |
+| `runcards/benchmarks/electron50GeV.mac`, `gamma5GeV.mac` | ✅ cut moved before init; `*_adept.mac` versions exist |
+| `runcards/run.mac`, `single.mac`, `init.mac` | no change needed ✅: option B sets the AdePT defaults in code. No cut is set, so all builds use the FTFP_BERT default 0.7 mm; add `/run/setCut` before `/run/initialize` for another value |
 | `runcards/run_gps.mac` | ✅ `/run/setCut 0.1 mm` moved before `/run/initialize`; AdePT version `runcards/run_gps_adept.mac` with the `/adept/` block (needs `-DWITH_GPS=ON`). The π⁻ runs work as well: the hadronic shower stays on the CPU, and its EM component goes to the GPU |
 | `runcards/run_msc.mac`, `run_nogammageneral.mac` | their EM commands have no effect on e⁻/e⁺/γ with AdePT (rule 4); do not use them for AdePT studies. ✅ marked "CPU only" in the macros |
 | `init_vis.mac`, `vis.mac`, `gui.mac` (interactive) | possible, but GPU tracks are not drawn as trajectories unless `/adept/returnAllSteps true` and `/adept/CallUserTrackingAction true` are set (slow); use the CPU build for visualisation |
@@ -750,7 +746,6 @@ Ordered by impact, all observed in this project:
 
 1. **`/run/setCut` after `/run/initialize`:** +1.4 % energy in the LAr on the GPU, and no warning. This is an AdePT
    limitation ([AdePT#745](https://github.com/apt-sim/AdePT/issues/745)), not fixed: avoided here by the macro order (Rules, item 2).
-   `SetDefaultCutValue` (step 3) only covers a late request for 0.01 mm.
 2. **Missing `/adept/setTrackInAllRegions true`:** nothing runs on the GPU. The run looks normal, just slow.
    Fixed by option B (step 2).
 3. **Energy-loss fluctuations off by default in AdePT:** different physics from the CPU lists. Fixed by option B or
@@ -791,17 +786,17 @@ Ordered by impact, all observed in this project:
 | `adept/include/ATLLArBarrelEmPhysics_AdePT.hh`, `adept/src/ATLLArBarrelEmPhysics_AdePT.cc` | new EM constructor with project defaults (option B) | ✅ new |
 | `ATLLArBarrel.cc` | `#include`, `ReplacePhysics(...AdePT...)` | ✅ (option B) |
 | `ATLLArBarrel.cc` | EM-option guard (`ATLLArBarrel001`) | ✅ |
-| `ATLLArBarrel.cc` | `SetDefaultCutValue(0.01*mm)` | ✅ |
 | `src/ATLLArBarrelTrackingAction.cc` | primaries via `GetPrimaryParticle()`, null-process check | ✅ |
 | `src/ATLLArBarrelSensDet.cc`, `include/ATLLArBarrelSensDet.hh` | per-thread HC IDs (no statics), index bounds | ✅ |
 | `src/ATLLArBarrelEventAction.cc`, `RunAction.cc`, `Hit.cc/.hh` | noise-free validation columns (optional) | ✅ |
 | `src/ATLLArBarrelConstruction.cc` (and helpers) | fix `catho3` and ThinAbs overlaps | ✅ done (`src/LAr*Construction.cc`; original in `legacy/src`) |
 | `run_adept.mac` | new macro (step 6) | ✅ new |
-| `runcards/benchmarks/*_adept.mac` | AdePT benchmark macros, cut before init | ✅ |
+| `runcards/benchmarks/*.mac`, `run.mac` | cut before init in all macros; AdePT benchmark macros `*_adept.mac` | ✅ |
 | other `runcards/*.mac` | cut before init in `run_gps.mac`, new `run_gps_adept.mac`, "CPU only" notes | ✅ |
 | `hepemlib/` + `WITH_G4HepEmEM` | matched CPU reference (`Review.md` Appendix A) | ✅ |
-| `README.md`, `BUILD_OPTIONS.md` | document `WITH_ADEPT`, macro rules, pitfalls 1–3, option B and the cut default | ✅ |
+| `README.md`, `BUILD_OPTIONS.md` | document `WITH_ADEPT`, macro rules, pitfalls 1–3, option B and the cut in the macros | ✅ |
 
-Option B, the default cut and the C++20 build were checked on the GPU machine (AdePT 0.4.2, 2026-11-19):
+Option B, the default cut (removed afterwards, see step 3) and the C++20 build were checked on the GPU machine
+(AdePT 0.4.2, 2026-11-19):
 `electron50GeV_adept.mac` reproduces `Results.md` 3b, and `run_adept.mac` without its `/adept/` lines runs on the
 GPU with the same settings.
