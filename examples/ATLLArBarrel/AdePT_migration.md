@@ -578,8 +578,11 @@ Two more rules from the AdePT documentation for future changes to user code:
 ### 4c. Optional: noise-free energy columns ✅
 
 Not required for AdePT, but very useful for its validation. `master` adds `EnergyLArNoNoise`, `EnergyLArNoBirks`
-and `EventID` to the ntuple (`RunAction`, `EventAction`, `Hit`). The electronic noise (20 MeV per event) otherwise
-hides differences of 0.1 %.
+and `EventID` to the ntuple (`RunAction`, `EventAction`, `Hit`). The electronic noise otherwise hides differences
+of 0.1 %: it is 20 MeV equivalent per cell, i.e. 20 MeV × `SampFrac` (0.2) = 4 MeV in the LAr, added independently
+to all 1024 + 512 + 256 = 1792 cells. On the LAr sum this gives an rms of 4 MeV × √1792 ≈ 169 MeV (≈ 847 MeV
+equivalent), against ≈ 50 MeV noise-free rms for 5 GeV photons. The cell vectors in the ntuple always include the
+noise; only the global sums exist without it.
 
 ---
 

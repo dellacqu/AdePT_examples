@@ -2,7 +2,12 @@
 #include <algorithm>
 #include <vector>
 
-void ATLLArBarrelAnalysis(){
+// smearSeed: the original v0.3 macro (2023) moves the seed cell by one row (3 % of events) or by one
+// eta cell (another 3 %), chosen at random. The reason for this is not documented and it is not a
+// boundary-safe clustering algorithm (the 7x7 window assumes an interior seed). It is off by default;
+// use root -l 'ATLLArBarrelAnalysis.c(true)' to reproduce the published v0.3 results.
+//
+void ATLLArBarrelAnalysis(bool smearSeed = false){
     
     //Open file and get tree
     //
@@ -50,12 +55,14 @@ void ATLLArBarrelAnalysis(){
         //Find index of vector max (middle layer)
         //
         auto MiddleMax = std::distance(Middle->begin(),(std::max_element(Middle->begin(),Middle->end())));
-        auto seed = rndm.Rndm();
-        if(seed<0.03){
-            MiddleMax=MiddleMax-1*MiddleEtasPerRow;
-        }
-        if(seed>=0.03 && seed<0.06){
-            MiddleMax=MiddleMax-1;
+        if(smearSeed){
+            auto seed = rndm.Rndm();
+            if(seed<0.03){
+                MiddleMax=MiddleMax-1*MiddleEtasPerRow;
+            }
+            if(seed>=0.03 && seed<0.06){
+                MiddleMax=MiddleMax-1;
+            }
         }
         //std::cout<<MiddleMax<<std::endl;
         //if(MiddleMax!=271) continue; //exclude events where max is not centered in hit 271

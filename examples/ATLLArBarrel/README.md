@@ -53,7 +53,7 @@ Ask authors for access to datasets.
 
 | ATLLArBarrel     | Reproduce data | Reproduce analysis | Comments     |
 | -------------    | ----------     | -----------        | -----------  |
-| v0.3 <br /> Dataset #1 <br /> tag 0.3_1 | Geant4-11.1 <br /> ALLArBarrel v0.3 <br /> built with -DWITH_GPS=ON <br /> ./ATLLArBarrel -m runcards/run_gps.mac -p FTFP_BERT -t 8 | root -l v0.3/ATLLArBarrelAnalysis.c | Preliminary esults for gamma and pi-, assuming run_gps_output/ is alongside root macro. Created on 15/05/2023. |
+| v0.3 <br /> Dataset #1 <br /> tag 0.3_1 | Geant4-11.1 <br /> ALLArBarrel v0.3 <br /> built with -DWITH_GPS=ON <br /> ./ATLLArBarrel -m runcards/run_gps.mac -p FTFP_BERT -t 8 | root -l 'v0.3/ATLLArBarrelAnalysis.c(true)' | Preliminary results for gamma and pi-, assuming run_gps_output/ is alongside root macro. Created on 15/05/2023. The `true` argument enables the random seed-cell shift (6 % of events) used for these results; it is off by default. |
 
 <!--How to-->
 ## How to

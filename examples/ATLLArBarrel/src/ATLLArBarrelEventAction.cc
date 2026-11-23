@@ -121,7 +121,8 @@ void ATLLArBarrelEventAction::EndOfEventAction(const G4Event *event)
   for (std::size_t n = 0; n < ATLLArBarrelTBConstants::BackHitNo; ++n)
     EnergyNoBirks += (*BackHC)[n]->GetEdepNoBirks();
 
-// Add electronic noise: gaussian with sigma 20 MeV equivalent
+// Add electronic noise: independent gaussian per cell, sigma 20 MeV equivalent
+// (20 MeV * SampFrac = 4 MeV in LAr), i.e. ~169 MeV rms on the sum of all 1792 cells
 //
 #ifndef NONOISE
   for (std::size_t n = 0; n < ATLLArBarrelTBConstants::FrontHitNo; ++n) {
