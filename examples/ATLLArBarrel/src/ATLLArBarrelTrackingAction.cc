@@ -36,7 +36,7 @@ void ATLLArBarrelTrackingAction::PostUserTrackingAction(const G4Track *aTrack)
   //
   // Do not use GetParentID()==0 to identify primaries: with AdePT, unless the track data are
   // kept on the host, secondaries of nuclear reactions on GPU steps have ParentID 0 as well
-  //(see Results.md, section 3d). Only real primaries have a G4PrimaryParticle attached.
+  //(see Results.md, section 2). Only real primaries have a G4PrimaryParticle attached.
   //
   const G4String &ParticleType = aTrack->GetParticleDefinition()->GetParticleType();
   if (!aTrack->GetDynamicParticle()->GetPrimaryParticle() || (ParticleType != "baryon" && ParticleType != "meson"))

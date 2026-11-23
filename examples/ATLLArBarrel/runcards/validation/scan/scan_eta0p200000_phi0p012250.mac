@@ -1,0 +1,12 @@
+#Position scan (see README.md), 20 GeV e-, eta 0.200000, phi 0.012250, 1000 events
+#CPU builds (FTFP_BERT and matched), requires -DWITH_GPS=OFF
+/random/setSeeds 20261123 3000
+#/run/setCut must precede /run/initialize (AdePT issue #745)
+/run/setCut 0.01 mm
+/run/initialize
+/run/printProgress 100
+/gun/particle e-
+/gun/energy 20 GeV
+/gun/position 0. 0. 0. m
+/gun/direction 0.9802544 0.0120087 0.1973753
+/run/beamOn 1000

@@ -26,6 +26,7 @@ A Geant4 simulation of the ATLAS LAr Barrel beam test setup.<br />
       </ul>
     </li>
     <li><a href="#g4hepem-integration">G4HepEm integration</a></li>
+    <li><a href="#scoring-with-adept-from-step-to-plot">Scoring with AdePT: from step to plot</a></li>
     <li><a href="#using-vecgeom">Using VecGeom</a></li>
   </ol>
 </details>
@@ -91,7 +92,7 @@ Parser options
 | `WITH_G4HepEm` | `OFF` | Build with G4HepEm, see [G4HepEm integration](#g4hepem-integration) |
 | `WITH_G4HepEmTracking` | `OFF` | Use the G4HepEm specialized tracking (`G4HepEmTrackingManager`); switched on automatically with recent G4HepEm versions, see [G4HepEm integration](#g4hepem-integration) |
 | `WITH_G4HepEmEM` | `OFF` | With `WITH_G4HepEm`: keep the reference physics list (`-p`, default `FTFP_BERT`) and replace only its EM constructor with `G4EmStandardPhysics` + `G4HepEmTrackingManager` (nuclear processes of e-, e+, gamma kept). This is the CPU reference for AdePT, see [G4HepEm integration](#g4hepem-integration) |
-| `WITH_G4HepEmEM_MSC_MULTISTEPS` | `OFF` | With `WITH_G4HepEmEM`: let G4HepEm do several MSC steps per transportation step (the G4HepEm default). `OFF` by default, as AdePT does on the GPU: only with `OFF` does the CPU reference reproduce AdePT (see [Results.md](Results.md), section 3e) |
+| `WITH_G4HepEmEM_MSC_MULTISTEPS` | `OFF` | With `WITH_G4HepEmEM`: let G4HepEm do several MSC steps per transportation step (the G4HepEm default). `OFF` by default, as AdePT does on the GPU: only with `OFF` does the CPU reference reproduce AdePT (see [Results.md](Results.md), appendix A3e) |
 | `WITH_ADEPT` | `OFF` | Transport e-, e+ and gamma on the GPU with [AdePT](https://github.com/apt-sim/AdePT) (requires CUDA, AdePT, VecGeom and G4HepEm built with CUDA; not compatible with `WITH_G4HepEm`). The EM constructor `ATLLArBarrelEmPhysics_AdePT` (`adept/`) sets the validated AdePT defaults in code (GPU in all regions, energy-loss fluctuations on); `/adept/` commands before `/run/initialize` still override them. The production cut is not set in code: put `/run/setCut` in the macro before `/run/initialize`, because later cut changes do not reach the GPU ([AdePT#745](https://github.com/apt-sim/AdePT/issues/745)). Only lists with the default EM option (`-p FTFP_BERT`, `..._EM0`, ...): lists with an EM suffix such as `_EMZ`, `_LIV` or `__GS` stop with `ATLLArBarrel001` |
 | `WITH_LEGACY_GEOMETRY` | `OFF` | Build the original geometry kept in `legacy/src/` instead of the fixed one (the original has a 1.03 mm presampler cathode overlap and 6–30 µm thin-absorber overlaps, see [Review.md](Review.md) section 4) |
 
@@ -196,7 +197,55 @@ the reference physics list chosen with `-p` is kept and only its EM constructor 
    By default this configuration disables the G4HepEm multiple steps in MSC + transportation, because AdePT does
    not use them on the GPU, and prints `--> G4HepEm: multiple steps in MSC + transportation OFF (as AdePT on GPU)`.
    Add `-DWITH_G4HepEmEM_MSC_MULTISTEPS=ON` to keep the G4HepEm default instead. The two settings differ by about
-   0.25 % in the LAr energy at 50 GeV ([Results.md](Results.md), section 3e).
+   0.25 % in the LAr energy at 50 GeV ([Results.md](Results.md), appendix A3e).
+
+<!--Scoring with AdePT-->
+## Scoring with AdePT: from step to plot
+
+This is the path of an energy deposit from a step to the comparison plots, and what each stage requires when the
+steps come from the GPU. With AdePT the sensitive detector is unchanged: AdePT copies every step in the LAr back to
+the CPU and calls `ProcessHits` on the worker thread of the event, before the end of the event.
+
+1. **Inputs of `ProcessHits`** (`src/ATLLArBarrelSensDet.cc`). Only the pre-step position, the total energy deposit
+   and the step length, plus the post-step position for the boundary diagnostics. AdePT copies all of them from the
+   GPU. The SD keeps no per-track state (only per-event sums, reset in `Initialize`) and never kills a track: both
+   are conditions for steps returned by AdePT.
+2. **Acceptance and channel mapping** (`FindCell`). The readout covers η in [0, 0.8) and the φ range of the
+   module. The section follows from the depth in the STAC: front below 4.3 X0 (90.6 mm), middle below 20.3 X0
+   (427.8 mm), back beyond. The η and φ indices give the index in the hits collection (1024 front, 512 middle,
+   256 back cells; sizes in `include/ATLLArBarrelTBConstants.hh`). The cells are virtual: they are not volumes, so a
+   cell boundary does not end a step, and the whole deposit goes to the cell of the pre-step point.
+   `EnergyCrossCell` and `EnergyCrossSection` measure how much energy is in steps that end in another cell or
+   section ([Results.md](Results.md), section 1g).
+3. **Raw and Birks accumulation.** `ApplyBirks` applies the ATLAS Birks law (constant field of 10 kV/cm) with the
+   deposit and the step length; each hit accumulates the corrected and the raw energy.
+4. **Event flush** (`src/ATLLArBarrelEventAction.cc`). The SD creates the 1792 hits at every event; at the end of
+   the event they are copied into the cell vectors, and the global sums are formed.
+5. **Optional electronic noise.** Independent Gaussian noise per cell, 20 MeV equivalent (4 MeV in the LAr),
+   added after the noise-free vectors and sums are saved; compile with `NONOISE` defined to switch it off.
+6. **ROOT output** (`src/ATLLArBarrelRunAction.cc`). One row per event: `HadInteraction`, `EnergyLAr`, the three
+   noisy cell vectors, `EnergyLArNoNoise`, `EnergyLArNoBirks`, `EventID`, the three noise-free cell vectors,
+   `EnergyCrossCell`, `EnergyCrossSection`. The worker ntuples are merged, so rows are not in event order: use
+   `EventID` to match events between runs.
+7. **CPU/GPU comparison** ([runcards/validation](runcards/validation/README.md)). One script runs the FTFP_BERT,
+   matched G4HepEm and AdePT builds with fixed seeds; `analysis/estats.py` (means and differences),
+   `analysis/resolution.py` (resolution curve) and `analysis/scan.py` (position scan) make the tables and plots of
+   [Results.md](Results.md), section 1. Compare AdePT with the matched G4HepEm build: FTFP_BERT has different EM
+   physics.
+
+Two AdePT-specific details matter for user code:
+- **Track IDs.** By default GPU tracks come back with the dummy track ID 0, so hadrons from a photonuclear
+  reaction on the GPU get ParentID 0, like a primary. `ATLLArBarrelTrackingAction` identifies primaries by their
+  `G4PrimaryParticle` instead ([Results.md](Results.md), section 2).
+- **Configuration order.** `/adept/` commands and `/run/setCut` must precede `/run/initialize`: later changes of the
+  production cut do not reach the GPU ([AdePT#745](https://github.com/apt-sim/AdePT/issues/745)).
+
+**Not covered by this example** (possible future examples):
+- the presampler, whose geometry is present but has no sensitive detector;
+- channel mapping through the touchable or copy numbers (the cells here are computed from the position);
+- hit times, track weights and truth that depends on the ancestry of a track;
+- regions mixing CPU and GPU transport, and the hand-off of a track between them;
+- clustering, calibration and pile-up: the energies are sums over all cells with a simplified response.
 
 <!--Using VecGeom-->
 ## Using VecGeom

@@ -6,14 +6,14 @@ electrons, positrons and photons on an NVIDIA GPU with [AdePT](https://github.co
 - **Starting point:** the application as it was before AdePT, commit `b831c99` ("Support recent G4HepEm
   versions without G4HepEmProcess").
 - **Target:** AdePT 0.4.3, released 2026-11-17. AdePT 0.4.2 also works with the same code. It is the
-  version validated on the GPU machine in `Results.md`, section 3.
+  version validated on the GPU machine in `Results.md`, section 1.
 - **What the current repository already has:** `master` of the original repository (`d91769b`, imported
   here) contains a working minimal migration (commits `8099cac`, `a6297c3`, `c5dd2bd`, `ac0e2df`). The rest (option B, CMake
   check, macros) was added here on 2026-11-19, so every step below is now applied (✅). The guide can still be followed
   step by step from the original code.
 - **How it was checked:** this guide was written on a Mac without an NVIDIA GPU, against the AdePT 0.4.3 and
   0.4.2 sources. The code of steps 1–3 and 6 was then built and run on the GPU machine of `Results.md` (AdePT
-  0.4.2, 2026-11-19): `electron50GeV_adept.mac` reproduces `Results.md` 3b, and a macro without `/adept/` lines
+  0.4.2, 2026-11-19): `electron50GeV_adept.mac` reproduces `Results.md` appendix A3b, and a macro without `/adept/` lines
   runs on the GPU with the defaults of option B.
 
 See also `Review.md`, section 7, and `BUILD_OPTIONS.md`, "Running with AdePT".
@@ -79,7 +79,7 @@ See also `Review.md`, section 7, and `BUILD_OPTIONS.md`, "Running with AdePT".
 | C++ compiler | C++20, supported by `nvcc` (gcc 13 used) | |
 | Geant4 | > 11.0 (11.4.3 used), multithreaded | `GEANT4_USE_GDML=ON`, `GEANT4_USE_SYSTEM_EXPAT=OFF` (recommended), `GEANT4_USE_USOLIDS=OFF` |
 | VecCore | ≥ 0.5.2 (0.8.2 used) | default build (header-only; the CUDA backend is selected by AdePT) |
-| VecGeom | **≥ 2.2.1** for AdePT 0.4.3 (2.2.0 is enough for 0.4.2) | `VECGEOM_ENABLE_CUDA=ON`, `VECGEOM_GDML=ON`, `BACKEND=Scalar`, `VECGEOM_NAV=index` (8 % faster for this kind of geometry, `Results.md` section 2) |
+| VecGeom | **≥ 2.2.1** for AdePT 0.4.3 (2.2.0 is enough for 0.4.2) | `VECGEOM_ENABLE_CUDA=ON`, `VECGEOM_GDML=ON`, `BACKEND=Scalar`, `VECGEOM_NAV=index` (8 % faster for this kind of geometry, `Results.md` section 3) |
 | G4HepEm | **≥ tag `20261106`** for 0.4.3 (`780e798` was used with 0.4.2) | `G4HepEm_CUDA_BUILD=ON`, `G4HepEm_EARLY_TRACKING_EXIT=ON` |
 | G4VG | 1.0.7 | fetched by AdePT if it is not installed |
 | AdePT | 0.4.3 (or 0.4.2) | |
@@ -337,7 +337,7 @@ ATLLArBarrelEmPhysics_AdePT::ATLLArBarrelEmPhysics_AdePT(G4int ver)
     fAdePTConfiguration(new AdePTConfiguration()),
     fTrackingManager(nullptr){
 
-    //Project defaults (validated in Results.md, section 3)
+    //Project defaults (validated in Results.md, section 1)
     //
     fAdePTConfiguration->SetTrackInAllRegions(true);      //otherwise nothing goes to the GPU
     fAdePTConfiguration->SetEnergyLossFluctuation(true);  //as G4EmStandardPhysics on the CPU
@@ -407,7 +407,7 @@ same EM physics as the GPU and the full hadronic list, so any remaining differen
 One setting must also match: AdePT does not use the G4HepEm multiple steps in MSC + transportation on the GPU
 (`AdePTConfiguration`, `SetMultipleStepsInMSCWithTransportation`, default `false`), while G4HepEm enables them by
 default on the CPU, also in AdePT's `G4EmStandardPhysics_HepEm`. With the G4HepEm default the CPU deposits about
-0.25 % less energy in the LAr than AdePT at 50 GeV; with them disabled it agrees with AdePT (`Results.md`, 3e).
+0.25 % less energy in the LAr than AdePT at 50 GeV; with them disabled it agrees with AdePT (`Results.md`, appendix A3e).
 `WITH_G4HepEmEM` therefore disables them by default (`-DWITH_G4HepEmEM_MSC_MULTISTEPS=ON` restores the G4HepEm
 default), and `G4EmStandardPhysics_HepEm` is not an exact reference unless the same setting is applied. The
 original `WITH_G4HepEm` physics list has no γ/e-nuclear processes and is 0.4 % off at 50 GeV
@@ -494,7 +494,7 @@ table below reviews every class of the original application against them.
 The original `PostUserTrackingAction` identified the primary with `GetParentID()==0`. By default AdePT does not
 keep the GPU track data on the host. Hadrons from γ/e-nuclear reactions on GPU steps are then created with
 parent ID 0, the dummy ID of the reconstructed GPU track, and they look like primaries. `HadInteraction` was set
-in 135 out of 150 events of 50 GeV electrons with AdePT, against 0 on the CPU (`Results.md` 3d). The original
+in 135 out of 150 events of 50 GeV electrons with AdePT, against 0 on the CPU (`Results.md` section 2). The original
 condition also had a logic error (`!= "baryon" || != "meson"` is always true), so the flag was never set.
 
 Replace it with an identification that does not depend on track IDs. Also guard against a null process for
@@ -505,7 +505,7 @@ void ATLLArBarrelTrackingAction::PostUserTrackingAction(const G4Track* aTrack) {
 
     //Do not use GetParentID()==0 to identify primaries: with AdePT, unless the track data are
     //kept on the host, secondaries of nuclear reactions on GPU steps have ParentID 0 as well
-    //(see Results.md, section 3d). Only real primaries have a G4PrimaryParticle attached.
+    //(see Results.md, section 2). Only real primaries have a G4PrimaryParticle attached.
     //
     const G4String& ParticleType = aTrack->GetParticleDefinition()->GetParticleType();
     if(!aTrack->GetDynamicParticle()->GetPrimaryParticle() || (ParticleType!="baryon" && ParticleType!="meson")) return;
@@ -538,7 +538,7 @@ need `/adept/CallUserTrackingAction`. The application has no stepping action.
 | touchable / volume of the pre-step point | yes (navigation state) |
 | `GetNonIonizingEnergyDeposit()` | **no**, always 0 for GPU steps: do not start using it |
 
-`Results.md` 3d checked that every step in the sensitive volume reaches the SD (95 million calls), with identical
+`Results.md` section 2 checked that every step in the sensitive volume reaches the SD (95 million calls), with identical
 energy per event.
 
 The AdePT rule "no per-track or shared mutable state" required one change. The original `Initialize()` kept the
@@ -578,8 +578,10 @@ Not required for AdePT, but very useful for its validation. `master` adds `Energ
 and `EventID` to the ntuple (`RunAction`, `EventAction`, `Hit`). The electronic noise otherwise hides differences
 of 0.1 %: it is 20 MeV equivalent per cell, i.e. 20 MeV × `SampFrac` (0.2) = 4 MeV in the LAr, added independently
 to all 1024 + 512 + 256 = 1792 cells. On the LAr sum this gives an rms of 4 MeV × √1792 ≈ 169 MeV (≈ 847 MeV
-equivalent), against ≈ 50 MeV noise-free rms for 5 GeV photons. The cell vectors in the ntuple always include the
-noise; only the global sums exist without it.
+equivalent), against ≈ 50 MeV noise-free rms for 5 GeV photons. The cell vectors `FrontHitsEdep`, `MiddleHitsEdep`
+and `BackHitsEdep` include the noise; since 2026-11-23 the same cells without noise are also stored
+(`*HitsEdepNoNoise`), together with the boundary diagnostics `EnergyCrossCell` and `EnergyCrossSection`
+(`Results.md`, section 1g).
 
 ---
 
@@ -587,7 +589,7 @@ noise; only the global sums exist without it.
 
 No code change is required: G4VG converts the Geant4 geometry to VecGeom at `/run/initialize`. The accordion, the
 presampler and the cryostat use solids supported by VecGeom, and the conversion was validated on the GPU
-(`Results.md` section 3).
+(`Results.md` section 1).
 
 Fixed (`Review.md` section 4.6) ✅. The original geometry is kept in `legacy/src` (`-DWITH_LEGACY_GEOMETRY=ON`):
 
@@ -612,7 +614,7 @@ only on the GPU. After the fixes, repeat the validation of step 8: the energy sh
    allocates the GPU memory and copies the geometry and the physics tables at initialisation.
 2. **`/run/setCut` goes before `/run/initialize`, and the cuts must not change afterwards.** This was the most
    important finding of the GPU validation. With the original order (`/run/initialize`, then `/run/setCut 0.01 mm`),
-   the GPU kept the default cut, and AdePT deposited **+1.4 %** more energy in the LAr (`Results.md` 3c). With the
+   the GPU kept the default cut, and AdePT deposited **+1.4 %** more energy in the LAr (`Results.md` appendix A3c). With the
    cut first, AdePT agrees with the CPU to better than 0.2 %. The CPU builds give the same result with both orders,
    so changing the existing macros is harmless.
 
@@ -710,10 +712,11 @@ Expected configuration output: `Project CMAKE option: building with USE_ADEPT (C
 Expected run output: `--> Using AdePT for e-, e+ and gamma`, then the AdePT initialisation (geometry conversion,
 GPU track and hit slots), and the G4HepEm configuration printout.
 
-Performance notes (`Results.md` 3a–3b):
+Performance notes (`Results.md` section 1f and appendix A3a–A3b):
 
-- The GPU pays off only with many tracks in flight. With 1 thread and 5 GeV γ, AdePT was 1.7× *slower* than the
-  CPU. With 8 threads and 50 GeV e⁻ it was 1.4× faster. Use several threads and high-energy showers.
+- The GPU pays off only with many tracks in flight. With 8 threads AdePT is slower than the CPU below 20 GeV
+  (3× slower at 5 GeV) and 1.9× faster than FTFP_BERT at 100 GeV; with 1 thread and 5 GeV γ it was 1.7× *slower*.
+  Use several threads and high-energy showers.
 - On the validation machine the GPU also drives the desktop display. A dedicated GPU will give better and more
   stable timings.
 
@@ -735,8 +738,10 @@ Repeat these checks after every change of AdePT, VecGeom, G4HepEm or geometry ve
 | 8 | Rerun with `/adept/setSeed` fixed | identical results |
 | 9 | After the geometry fixes of step 5 | energy unchanged |
 
-The analysis can use `estats.py` of the review (`~/atllarbarrel-review`, needs `uproot` and `numpy`) or the
-macros in `analysis/`.
+The energy statistics and the differences between setups (rows 1–6) are computed by `analysis/estats.py` (needs
+`uproot` and `numpy`, not ROOT), for example
+`python3 analysis/estats.py cpu=<cpu>/ATLLArBarrelout_Run0.root AdePT=<adept>/ATLLArBarrelout_Run0.root`.
+It was rewritten on 2026-11-23 from the definitions in `Results.md`, because the review's original was not kept.
 
 ---
 
@@ -798,5 +803,5 @@ Ordered by impact, all observed in this project:
 
 Option B, the default cut (removed afterwards, see step 3) and the C++20 build were checked on the GPU machine
 (AdePT 0.4.2, 2026-11-19):
-`electron50GeV_adept.mac` reproduces `Results.md` 3b, and `run_adept.mac` without its `/adept/` lines runs on the
+`electron50GeV_adept.mac` reproduces `Results.md` appendix A3b, and `run_adept.mac` without its `/adept/` lines runs on the
 GPU with the same settings.

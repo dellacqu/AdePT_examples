@@ -1,5 +1,5 @@
 #AdePT version of run_gps.mac, requires -DWITH_ADEPT=ON -DWITH_GPS=ON
-#All /adept/ commands and /run/setCut must precede /run/initialize (see Results.md, section 3c)
+#All /adept/ commands and /run/setCut must precede /run/initialize (see Results.md, appendix A3c)
 #The pi- runs work as well: the hadronic shower stays on the CPU, its EM component goes to the GPU
 /adept/setVerbosity 0
 /adept/setMillionsOfTrackSlots 1

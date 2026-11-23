@@ -46,7 +46,7 @@ machine, both numbers are given.
   this matched configuration to the project as the reference for G4HepEm, and for comparisons with AdePT
   (added on 2026-11-19 as `-DWITH_G4HepEmEM=ON`).
 - **AdePT.** The project already contains a working AdePT integration (`WITH_ADEPT`), validated on an
-  NVIDIA RTX 2070 SUPER with AdePT 0.4.2 (`Results.md`, section 3). Checked against the AdePT
+  NVIDIA RTX 2070 SUPER with AdePT 0.4.2 (`Results.md`, appendix A3). Checked against the AdePT
   sources (v0.4.2 and v0.4.3, released today), the integration follows the documented pattern. Section 7
   lists everything that is needed to run on a GPU, what is already in place, and the changes still
   recommended: CMake minimum version, guard against physics lists with a non-default EM option (since added
@@ -55,7 +55,7 @@ machine, both numbers are given.
   The geometry fixes of section 4.6 were later checked with AdePT on the GPU machine: the LAr energy
   does not change within statistics (section 4.6). Against the matched CPU reference, now part of the project
   (`WITH_G4HepEmEM`, with G4HepEm's multiple MSC steps off as on the GPU), AdePT agrees to 0.01 % at 50 GeV and
-  0.06 % at 5 GeV with 10000 events, also in the longitudinal shower shape (`Results.md`, section 3e).
+  0.06 % at 5 GeV with 10000 events, also in the longitudinal shower shape (`Results.md`, appendix A3e).
 
 ---
 
@@ -231,7 +231,7 @@ Physics: 400 events of 10 GeV e- at η = 0.2 (FTFP_BERT, cut 0.01 mm) give
 a difference of 0.6σ. The removed material is 0.27 mm of cathode outside `STAC` and 0.2 mm of lead
 at the η = 1.475 edge, outside the readout region.
 
-**AdePT on GPU (2026-11-19).** The two AdePT benchmarks of `Results.md`, section 3, were re-run on the
+**AdePT on GPU (2026-11-19).** The two AdePT benchmarks of `Results.md`, appendix A3, were re-run on the
 machine of `Results.md` (EL9, NVIDIA RTX 2070 SUPER, CUDA 13.1, Geant4 11.4.3, AdePT 0.4.2,
 `CMAKE_CUDA_ARCHITECTURES=75`) with two builds from the current sources:
 
@@ -246,7 +246,7 @@ difference fixed − legacy (same `EventID`).
 
 | Geometry | EnergyLAr | EnergyLArNoNoise | Time per event |
 |---|---|---|---|
-| `Results.md` 3a (cut before init) | 960.5 ± 10.3 (rms 179) | 973.4 ± 2.6 (rms 45.2, min 834.5) | 232.0 ms |
+| `Results.md` appendix A3a (cut before init) | 960.5 ± 10.3 (rms 179) | 973.4 ± 2.6 (rms 45.2, min 834.5) | 232.0 ms |
 | legacy, re-run | 960.5 ± 10.3 (rms 179.0) | 973.4 ± 2.6 (rms 45.2, min 834.5) | 227 ms |
 | **fixed** | 961.3 ± 10.2 (rms 177.0) | **973.8 ± 2.6** (rms 44.4, min 835.5) | 224 ms |
 | fixed − legacy (paired) | | +0.4 ± 0.6 | |
@@ -255,7 +255,7 @@ difference fixed − legacy (same `EventID`).
 
 | Geometry | EnergyLAr | EnergyLArNoNoise | Wall time |
 |---|---|---|---|
-| `Results.md` 3b (cut before init) | 9899.0 ± 19.0 (rms 232, min 8374.2) | 9920.7 ± 13.2 (rms 161, min 8472.5) | 20.31–20.45 s |
+| `Results.md` appendix A3b (cut before init) | 9899.0 ± 19.0 (rms 232, min 8374.2) | 9920.7 ± 13.2 (rms 161, min 8472.5) | 20.31–20.45 s |
 | legacy, re-run | 9899.0 ± 19.0 (rms 232.3, min 8374.2) | 9920.7 ± 13.2 (rms 161.3, min 8472.5) | 20.2 s |
 | **fixed** | 9895.7 ± 19.8 (rms 242.7, min 8168.3) | **9919.4 ± 13.3** (rms 162.8, min 8446.4) | 19.9 s |
 | fixed − legacy (paired) | | −1.3 ± 0.8 | |
@@ -346,7 +346,7 @@ matched 141.03 / 140.97. 50 GeV, 6 threads: CPU 75.38 / 77.03, EM-only 53.66 / 5
 | 50 GeV e⁻, 300 ev., 6 thr. | 9923.0 ± 7.6 (rms 132) | 9961.2 ± 7.2 (rms 125) | **+38.2 ± 10.5 (+0.38 %, 3.6 σ)** | 9913.0 ± 7.4 (rms 120)¹ | −10.0 ± 10.6 (−0.1 %, 0.9 σ) |
 
 ¹ 299 events: one event deposits 4594 MeV (all 300 events: 9895.3 ± 19.2 MeV, rms 332). It is the kind of
-photonuclear event described in `Results.md`, section 3b (a 30–35 GeV photon converted into hadrons), and
+photonuclear event described in `Results.md`, appendix A3b (a 30–35 GeV photon converted into hadrons), and
 it can only occur when the nuclear processes are present.
 
 With the electronic noise included (`EnergyLAr`) the conclusions are the same, with errors about 2× larger.
@@ -355,7 +355,7 @@ With the electronic noise included (`EnergyLAr`) the conclusions are the same, w
 significance in two independent samples. The matched configuration agrees with FTFP_BERT, so the excess
 comes from the missing photo/electro-nuclear processes, which in FTFP_BERT move part of the shower energy
 into hadrons and neutrons that deposit little in the LAr. It is not caused by G4HepEm itself. This also
-explains why the G4HepEm comparison of `Results.md`, section 1, is (as its Caveats section already
+explains why the G4HepEm comparison of `Results.md`, appendix A1, is (as the caveats of that appendix already
 warns) not a matched control for AdePT. AdePT's `G4EmStandardPhysics_AdePT` does keep the nuclear
 processes, so **the matched configuration is the right CPU reference for G4HepEm and AdePT**.
 
@@ -372,7 +372,7 @@ A step-by-step migration guide from the original CPU application, with the compl
 AdePT EM constructor and the converted macros, is in [AdePT_migration.md](AdePT_migration.md).
 
 **Most of what is needed is already in the repository** (commit `8099cac` and follow-ups, validated in
-`Results.md`, section 3). Section 7.1 lists all the changes, marking what exists and what is still
+`Results.md`, appendix A3 and section 1). Section 7.1 lists all the changes, marking what exists and what is still
 recommended. The items still to do (7.2–7.5) were checked against the AdePT sources but not built,
 because this machine has no NVIDIA GPU.
 
@@ -386,7 +386,7 @@ because this machine has no NVIDIA GPU.
 | Physics | `ReplacePhysics(new ATLLArBarrelEmPhysics_AdePT())` on the reference list: same physics as `G4EmStandardPhysics_AdePT`, project defaults in code; default cut 0.01 mm | ✅ present (`ATLLArBarrel.cc`, `adept/`; AdePT_migration.md option B) |
 | Physics | Guard for lists with non-default EM options | ✅ present (`ATLLArBarrel.cc:128–139`, finding 4) |
 | Physics | Direct `AdePTTrackingManager` for other EM setups (case 3) | not needed for the validated `FTFP_BERT` (7.3) |
-| User code | Sensitive detector compatible with returned GPU steps | ✅ verified (`Results.md` 3d, section 3.2 here) |
+| User code | Sensitive detector compatible with returned GPU steps | ✅ verified (`Results.md` section 2, section 3.2 here) |
 | User code | Primary identification without `ParentID == 0` | ✅ fixed (`ATLLArBarrelTrackingAction.cc`) |
 | Macros | `/adept/*` before `/run/initialize`, `/run/setCut` before `/run/initialize`, energy-loss fluctuations on, GPU in all regions | ✅ present (`runcards/benchmarks/*_adept.mac`) |
 | Geometry | Fix the two overlaps before GPU production runs | ✅ fixed (section 4.6; original in `legacy/src`) |
@@ -533,14 +533,14 @@ Requirements of AdePT 0.4.3 (master, 2026-11-17), from its `CMakeLists.txt` and 
 | CUDA | 12 or newer recommended | |
 | Geant4 | > 11.0 | `GEANT4_USE_GDML=ON`, `GEANT4_USE_SYSTEM_EXPAT=OFF` recommended, `GEANT4_USE_USOLIDS=OFF` |
 | VecCore | ≥ 0.5.2 (0.8.2 used in `Results.md`) | |
-| VecGeom | **≥ 2.2.1** (0.4.2 had no minimum) | `VECGEOM_ENABLE_CUDA=ON`, `VECGEOM_GDML=ON`, `BACKEND=Scalar`, `VECGEOM_NAV=index` for this geometry (`Results.md` section 2), same `CMAKE_CUDA_ARCHITECTURES` |
+| VecGeom | **≥ 2.2.1** (0.4.2 had no minimum) | `VECGEOM_ENABLE_CUDA=ON`, `VECGEOM_GDML=ON`, `BACKEND=Scalar`, `VECGEOM_NAV=index` for this geometry (`Results.md` section 3), same `CMAKE_CUDA_ARCHITECTURES` |
 | G4HepEm | **≥ tag `20261106`** | `G4HepEm_CUDA_BUILD=ON`, `G4HepEm_EARLY_TRACKING_EXIT=ON` |
 | G4VG | 1.0.7 | fetched by AdePT if not installed |
 | AdePT | 0.4.2 (validated in `Results.md`) or 0.4.3 | `CMAKE_CUDA_ARCHITECTURES` as above |
 
 The validated stack of `Results.md` (AdePT 0.4.2, VecGeom 2.2.0, G4HepEm `780e798`) does **not** satisfy
 AdePT 0.4.3. To move to 0.4.3, update VecGeom to 2.2.1 and G4HepEm to `20261106` (the tag used in this
-review for the CPU builds), then repeat the validation of `Results.md`, section 3. The UI commands used by
+review for the CPU builds), then repeat the validation of `Results.md`, section 1. The UI commands used by
 the project's macros are unchanged between 0.4.2 and 0.4.3 (0.4.3 only adds `/adept/validateHandoff`).
 
 Build commands on the GPU machine:
@@ -571,19 +571,19 @@ All `/adept/` commands, **and `/run/setCut`**, must come before `/run/initialize
 /adept/setTrackInAllRegions true        # without this (or /adept/addGPURegion) nothing goes to the GPU
 /adept/SetEnergyLossFluctuation true    # AdePT default is off, Geant4 lists have it on
 /adept/setSeed 1234                     # optional, for reproducible GPU random numbers
-/run/setCut 0.01 mm                     # after /run/initialize the GPU keeps the default cut (Results.md 3c)
+/run/setCut 0.01 mm                     # after /run/initialize the GPU keeps the default cut (Results.md appendix A3c)
 /run/initialize
 ```
 
 Notes:
 
-- `/run/setCut` after `/run/initialize` produced a +1.4 % LAr energy excess on the GPU (`Results.md`, 3c).
+- `/run/setCut` after `/run/initialize` produced a +1.4 % LAr energy excess on the GPU (`Results.md`, appendix A3c).
   This is the most important pitfall of the integration and should be stated prominently in the README.
 - Track and hit slots: 1 M each was enough for 50 GeV electrons with 8 threads on an 8 GB card.
   Increase `setMillionsOfHitSlots` for higher energies or more threads.
 - The GPU is used efficiently only with many tracks in flight. Use several CPU threads (`-t`) and
   high-energy showers: with 1 thread and 5 GeV photons AdePT was 1.7× *slower* than the CPU, with 8 threads
-  and 50 GeV electrons 1.4× faster (`Results.md`, 3a–3b).
+  and 50 GeV electrons 1.4× faster (`Results.md`, appendix A3a–A3b).
 - For a fair timing comparison, use the matched G4HepEm configuration (Appendix A) as the CPU reference.
   It has the same physics as `G4EmStandardPhysics_AdePT`, but on the CPU.
 
@@ -593,9 +593,9 @@ Notes:
 2. The G4HepEm configuration printed at initialisation shows energy-loss fluctuations on and the
    production cut of 0.01 mm.
 3. `electron50GeV_adept.mac` with 8 threads: `EnergyLArNoNoise` within 0.2 % of the CPU (`Results.md`: +0.15 ± 0.06 %).
-   ✅ Done on 2026-11-19 with the fixed geometry (`Results.md` 3e), 10000 events: +0.09 ± 0.02 % against FTFP_BERT
+   ✅ Done on 2026-11-19 with the fixed geometry (`Results.md` appendix A3e), 10000 events: +0.09 ± 0.02 % against FTFP_BERT
    and +0.01 ± 0.02 % against the matched CPU reference (`-DWITH_G4HepEm=ON -DWITH_G4HepEmEM=ON`).
-4. `gamma5GeV_adept.mac`: agreement within statistics. ✅ Done (`Results.md` 3e), 10000 events: +0.07 ± 0.07 %
+4. `gamma5GeV_adept.mac`: agreement within statistics. ✅ Done (`Results.md` appendix A3e), 10000 events: +0.07 ± 0.07 %
    against FTFP_BERT, −0.06 ± 0.07 % against the matched reference. The longitudinal shape (Front, Middle, Back)
    also agrees.
 5. `HadInteraction` = 0 for e⁻/γ beams, and the same value as on the CPU for a pion beam.
@@ -638,7 +638,7 @@ updated Xcode SDK. The ROOT files were therefore read with `uproot` from a Pytho
 be applied (`git apply` now fails, because the changes are already there). The project version adds one
 setting: G4HepEm's multiple steps in MSC + transportation are disabled by default, as AdePT does on the GPU, and
 `-DWITH_G4HepEmEM_MSC_MULTISTEPS=ON` restores the G4HepEm default used by the patch below and by the matched
-results of section 6 (see `Results.md`, section 3e).
+results of section 6 (see `Results.md`, appendix A3e).
 
 Adds the CMake option `WITH_G4HepEmEM` (requires `WITH_G4HepEm=ON`): the reference physics list chosen with
 `-p` is kept, and only its EM constructor is replaced by `G4EmStandardPhysics` with the
@@ -784,7 +784,7 @@ Before it was added to the project, it applied with `git apply` in the root of A
 current sources (after clang-format and the fixes of section 4.6), checked with clang-format-19, and
 built with 0 warnings against Geant4 11.4.3 and G4HepEm `780e798` (EL9, gcc 13.3). With 150 electrons
 of 50 GeV and 8 threads (`electron50GeV.mac`) it gives EnergyLArNoNoise = 9902.0 ± 10.9 MeV
-(rms 133.5), compatible with FTFP_BERT on the same machine (`Results.md` 3b: 9913.8 ± 9.9 MeV,
+(rms 133.5), compatible with FTFP_BERT on the same machine (`Results.md` appendix A3b: 9913.8 ± 9.9 MeV,
 −11.8 ± 14.7 MeV, 0.8σ), and the log confirms that `photonNuclear` and `electronNuclear` are kept as
 extra G4HepEm processes. The earlier version of this patch, written against the unformatted sources,
 had wrong hunk headers and did not apply.

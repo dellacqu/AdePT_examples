@@ -23,7 +23,7 @@ ATLLArBarrelEmPhysics_AdePT::ATLLArBarrelEmPhysics_AdePT(G4int ver)
     : G4EmStandardPhysics(ver, "ATLLArBarrelEmPhysics_AdePT"), fAdePTConfiguration(new AdePTConfiguration()),
       fTrackingManager(nullptr)
 {
-  // Project defaults (validated in Results.md, section 3)
+  // Project defaults (validated in Results.md, section 1)
   //
   fAdePTConfiguration->SetTrackInAllRegions(true);     // otherwise nothing goes to the GPU
   fAdePTConfiguration->SetEnergyLossFluctuation(true); // as G4EmStandardPhysics on the CPU

@@ -1,5 +1,5 @@
 #AdePT version of run.mac, requires -DWITH_ADEPT=ON
-#All /adept/ commands and /run/setCut must precede /run/initialize (see Results.md, section 3c)
+#All /adept/ commands and /run/setCut must precede /run/initialize (see Results.md, appendix A3c)
 #The /adept/ lines repeat the defaults of ATLLArBarrelEmPhysics_AdePT: they document the run
 #
 /adept/setVerbosity 0

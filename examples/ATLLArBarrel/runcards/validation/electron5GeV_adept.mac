@@ -1,0 +1,21 @@
+#Validation macro, 5 GeV e-, 1000 events (see runcards/validation/README.md)
+#AdePT build (-DWITH_ADEPT=ON), requires -DWITH_GPS=OFF
+#Same Geant4 seeds as electron5GeV.mac; all /adept/ commands must precede /run/initialize
+/random/setSeeds 20261123 1005
+/adept/setSeed 7005
+/adept/setVerbosity 0
+/adept/setMillionsOfTrackSlots 1
+/adept/setMillionsOfHitSlots 1
+/adept/setCUDAStackLimit 8192
+/adept/setTrackInAllRegions true
+/adept/SetEnergyLossFluctuation true
+#/run/setCut must precede /run/initialize (AdePT issue #745)
+/run/setCut 0.01 mm
+/run/initialize
+/run/printProgress 100
+/gun/particle e-
+/gun/energy 5 GeV
+/gun/position 0. 0. 0. m
+#eta 0.2 phi 0.01225 (0.0245/2)
+/gun/direction 0.980254 0.0120087 0.197375
+/run/beamOn 1000

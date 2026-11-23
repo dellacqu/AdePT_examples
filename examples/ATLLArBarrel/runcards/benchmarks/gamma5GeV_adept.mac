@@ -6,7 +6,7 @@
 /adept/setCUDAStackLimit 8192
 /adept/setTrackInAllRegions true
 /adept/SetEnergyLossFluctuation true
-#With AdePT the production cut must be set before /run/initialize (see Results.md, section 3c)
+#With AdePT the production cut must be set before /run/initialize (see Results.md, appendix A3c)
 /run/setCut 0.01 mm
 /run/initialize
 /run/printProgress 100

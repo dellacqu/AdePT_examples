@@ -142,7 +142,7 @@ int main(int argc, char **argv)
   physicsList->ReplacePhysics(new ATLLArBarrelEmPhysics_AdePT());
   // No default production cut is set here, so the CPU and AdePT builds use the same one.
   // Set /run/setCut in the macro, before /run/initialize: later cut changes do not
-  // reach the GPU tables (AdePT issue #745, Results.md section 3c)
+  // reach the GPU tables (AdePT issue #745, Results.md appendix A3c)
 #endif
   runManager->SetUserInitialization(physicsList);
 #endif
