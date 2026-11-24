@@ -111,21 +111,26 @@ Core σ/μ of `EnergyLArNoNoise`, %:
 | 40 | 1.36 ± 0.05 | 1.34 ± 0.06 | 1.34 ± 0.04 |
 | 100 | 0.83 ± 0.03 | 0.81 ± 0.04 | 0.82 ± 0.02 |
 
-Fits, as weighted linear fits in (σ/μ)², E in GeV:
+Empirical fits, as weighted linear fits in (σ/μ)², E in GeV (B is not constrained to be positive):
 
-| Setup | a (% √GeV), noise-free: (σ/μ)² = a²/E + b² | b² (%²) | c (GeV), with noise: + c²/E², a and b fixed |
+| Setup | a (% √GeV), noise-free: (σ/μ)² = a²/E + B | B (%²) | c (GeV), with noise: + c²/E², a and B fixed |
 |---|---|---|---|
-| FTFP_BERT | 9.28 ± 0.20 (χ² 10.1/3) | −0.19 ± 0.06 | 0.866 ± 0.017 (χ² 9.5/4) |
-| matched | 8.95 ± 0.22 (χ² 3.7/3) | −0.15 ± 0.08 | 0.885 ± 0.018 (χ² 2.5/4) |
-| AdePT | 9.24 ± 0.22 (χ² 6.1/3) | −0.20 ± 0.06 | 0.892 ± 0.019 (χ² 1.8/4) |
+| FTFP_BERT | 9.28 ± 0.20 (χ² 10.1/3) | −0.19 ± 0.06 (−3.1 σ) | 0.866 ± 0.017 (χ² 9.5/4) |
+| matched | 8.95 ± 0.22 (χ² 3.7/3) | −0.15 ± 0.08 (−1.8 σ) | 0.885 ± 0.018 (χ² 2.5/4) |
+| AdePT | 9.24 ± 0.22 (χ² 6.1/3) | −0.20 ± 0.06 (−3.3 σ) | 0.892 ± 0.019 (χ² 1.8/4) |
 
-- **The three setups have the same resolution.** The ratios to the matched reference are compatible with 1 at all
+- **The three setups agree in resolution within the errors.** The ratios to the matched reference are compatible with 1 at all
   energies, and the sampling terms agree within 1.1 σ.
 - **The noise term matches the noise model.** The expected value is 169 MeV / (μ/E) = 0.868 GeV; the fits give
   0.87–0.89 GeV.
-- **The constant term is compatible with 0** (b < 0.3 % at 95 % CL), but b² comes out negative by 2–3 σ for all three
-  setups: the resolution falls slightly faster than 1/√E between 5 and 100 GeV, so a/√E ⊕ b is not a complete
-  description. This is common to the three setups and does not affect the comparison.
+- **The fit is empirical, not a measurement of a constant term.** B comes out negative for the three setups, by
+  1.8–3.3 σ: between 5 and 100 GeV the resolution falls slightly faster than 1/√E, so a/√E ⊕ b does not describe
+  the curve, and no constant term b (value or limit) is derived from it. The fit is used only to summarise each
+  curve with the same function; the comparison rests on the resolution points and their ratios, and on a, which
+  agrees within 1.1 σ. Measuring a constant term would need a model that describes the data and a stated confidence
+  procedure, which this comparison does not need.
+- The errors on c are conditional on a and B fixed from the noise-free fit: they do not include the uncertainty of
+  that fit or its correlations.
 - This is the resolution of the sum of all LAr cells for a fixed beam direction, with the simplified detector
   response of the example (constant field in Birks, independent Gaussian noise on all cells, no clustering or
   calibration). It is a comparison of the simulated response, not the resolution of a reconstructed ATLAS electron.
@@ -145,10 +150,10 @@ Events with `EnergyLArNoNoise` below 80 % of the median. They come from photonuc
 | **total** | **5** | **6** | **1** |
 
 The tail drives the rms: at 40 GeV the rms/mean is 2.18 % (FTFP_BERT) and 2.11 % (matched) against 1.39 % (AdePT),
-while the core resolution is the same (1.34–1.36 %). With 1 event against 5–6, a fluctuation has a probability of
-a few percent, and at 50 GeV with 10000 events the three setups had compatible tails
-([A3e](#a3e-adept-against-the-matched-g4hepem-cpu-reference-2026-11-19)). Section 1e checks this with 10000 events at
-40 GeV: **the tails are the same**, and the 1-against-5 is a fluctuation of the threshold choice.
+while the core resolution is the same (1.34–1.36 %). The counts are small: summed over the energies, 1 event against
+6 (matched) in equal samples of 5000 events gives p = 0.12 in a two-sided Fisher test, so the difference is not
+significant, but these counts cannot show that the tail rates are equal either. Section 1e repeats the 40 GeV point
+with 10000 events.
 
 ### 1e. 40 GeV with 10000 events
 
@@ -168,18 +173,26 @@ seeds, so the first events overlap with the 1000-event sample. All runs ended wi
 - **Mean and resolution:** AdePT agrees with the matched reference to 0.02 % (1.0 σ) in the mean and to 0.2 % in the
   core resolution. The difference to FTFP_BERT is now significant (5.7 σ) and is the same for the matched reference
   (+0.11 %): it is the G4HepEm vs Geant4 EM physics.
-- **Tail: no difference.** Events below a fraction of the median, for several thresholds:
+- **Tail: no significant difference observed; the precision on rare events is limited.** Events below a fraction of
+  the median, for several thresholds (counts out of 10000; p: two-sided Fisher test, AdePT against matched; ratio:
+  AdePT/matched rate, 95 % interval from the conditional binomial, Clopper–Pearson):
 
   | Threshold | 0.95 | 0.90 | 0.85 | 0.80 | 0.70 | 0.60 |
   |---|---|---|---|---|---|---|
   | FTFP_BERT | 49 | 17 | 16 | 8 | 3 | 1 |
   | matched | 44 | 10 | 6 | 5 | 1 | 1 |
   | AdePT | 29 | 9 | 6 | 1 | 1 | 0 |
+  | p, AdePT vs matched | 0.10 | 1.00 | 1.00 | 0.22 | 1.00 | 1.00 |
+  | AdePT/matched rate, 95 % interval | 0.40–1.08 | 0.32–2.5 | 0.27–3.7 | 0–1.8 | 0.01–79 | 0–39 |
 
-  The 1-against-5 at 0.80 of section 1d does not hold at the neighbouring thresholds, and a difference of this size
-  at one of six thresholds is expected by chance. A Kolmogorov–Smirnov test of the full noise-free distributions gives
-  **p = 0.70 for AdePT against matched** (and p = 0.0004 for matched against FTFP_BERT, the EM-physics difference). The
-  lower rms/mean of AdePT comes from a few events and is compatible within the errors.
+  No threshold shows a significant difference, but the intervals are wide: at 0.80 and below, a factor of 2 or more
+  between the two tail rates is not excluded, and at 0.95 the AdePT rate is lower by about a third (p = 0.10). The
+  thresholds are nested, so the six columns are correlated and not independent tests. A Kolmogorov–Smirnov test of
+  the full noise-free distributions gives p = 0.70 for AdePT against matched (and p = 0.0004 for matched against
+  FTFP_BERT, the EM-physics difference): this is a consistency check of the whole distribution, which a few tail
+  events hardly change, not a test of the tail. Showing that the tail rates are equal would need an explicit
+  equivalence goal (the rate difference to exclude) and the statistics to reach it. The lower rms/mean of AdePT
+  comes from a few events and is compatible within the errors.
 
 ### 1f. Time per run
 
@@ -232,17 +245,21 @@ with errors are printed by `analysis/scan.py`. Selected values, matched G4HepEm 
 - **The cell response is the same on CPU and GPU.** The sharing between cells (0.43 of the middle energy in the
   hottest cell on a boundary, 0.73 at the centre), the position bias of the barycentre (the usual S-shape, up to
   0.16 cell towards the centre), R_η and R_φ follow the same curves for the three setups. Of the 70 AdePT − matched
-  differences (7 observables × 10 points), 3 are above 2 σ and none above 2.6 σ, as expected from fluctuations
-  (about 3).
+  differences (7 observables × 10 points), 3 are above 2 σ and none above 2.6 σ. This count is descriptive, not a
+  global test: the two scans share their centre point (9 simulated points, 10 entries), and the observables of one
+  point are correlated with each other.
 - **The accordion is navigated the same way on the GPU.** In φ the response oscillates by ±0.3 % with a period of
   1/4 cell, from the accordion folds, and R_η follows the same pattern; AdePT reproduces the pattern of the matched
   reference point by point (within 0.9 σ in the response).
 - **Steps crossing a boundary.** 3.3–5.0 % of the LAr energy is in steps that end in another cell, most at a cell
-  boundary, and about 0.4 % in steps that end in another section. Assigning these steps to the pre-step cell is an
-  approximation of the example; it is the same on CPU and GPU within 3 % of its size. The two 2.6 σ differences
-  (AdePT 1.6 % and 3 % higher in the two crossing fractions) are at the same point, φ = 0, a φ boundary of all three
-  layers, and are correlated with each other; with 70 comparisons they are not significant, but they are the place
-  to look first with more statistics.
+  boundary, and about 0.4 % in steps that end in another section. The example gives the whole deposit of such a step
+  to its pre-step cell; the fractions show how much energy this concerns, and that it is the same on CPU and GPU
+  within 3 % of its size. They are not a measured scoring error: they identify the steps that may be affected, and
+  measuring the bias of the approximation would need a study with subdivided steps, which the example does not
+  include. The scan therefore tests that CPU and GPU agree with the same simplified scoring, not how close that
+  scoring is to the ATLAS one. The two 2.6 σ differences (AdePT 1.6 % and 3 % higher in the two crossing fractions)
+  are at the same point, φ = 0, a φ boundary of all three layers, and are correlated with each other; among 70
+  comparisons they are not significant on their own, but they are the place to look first with more statistics.
 - FTFP_BERT differs from the two G4HepEm setups in the response (−0.1 %, as in 1a) and slightly in R_η and R_φ: the
   EM-physics difference again.
 

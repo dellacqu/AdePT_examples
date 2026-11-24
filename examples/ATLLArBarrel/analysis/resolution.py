@@ -17,9 +17,14 @@ Two estimators of sigma/mu are given:
 Errors are bootstrap standard deviations (events resampled, 300 times).
 
 The core resolution is fitted, as a weighted linear fit in (sigma/mu)^2, with
-    (sigma/mu)^2 = a^2/E + b^2               (noise-free; b^2 may come out negative when b ~ 0)
-    (sigma/mu)^2 = a^2/E + b^2 + c^2/E^2     (with noise; a and b fixed from the noise-free fit)
-(E in GeV). The noise only adds in quadrature, so fixing a and b leaves c as a clean check.
+    (sigma/mu)^2 = A/E + B                   (noise-free)
+    (sigma/mu)^2 = A/E + B + C/E^2           (with noise; A and B fixed from the noise-free fit)
+(E in GeV). These are empirical fits, used to compare the setups with one number each. B is not
+constrained, and it can come out negative, i.e. the curve falls faster than 1/sqrt(E). Then the
+fitted B is not a physical constant term, and none is derived from it: the script prints B with its
+distance from 0, and no b = sqrt(B) and no limit. a = sqrt(A) is printed, as the usual sampling-term
+summary. The noise only adds in quadrature, so fixing A and B leaves C = c^2 as a check of the noise;
+its error is conditional on A and B and does not include their uncertainty or correlation.
 Expected noise term: 4 MeV x sqrt(1792) = 169 MeV in the LAr, i.e. c ~ 0.169 GeV / (mu/E),
 printed next to the fitted c as a check.
 
@@ -89,7 +94,7 @@ def wls(X, y, dy):
 
 
 def fit_noise_free(E, r, dr):
-    """(sigma/mu)^2 = A/E + B, linear in A = a^2 and B = b^2 (B may come out negative)."""
+    """(sigma/mu)^2 = A/E + B, linear in A and B (empirical: B is not constrained and may be negative)."""
     X = np.column_stack([1 / E, np.ones_like(E)])
     return wls(X, r**2, 2 * r * dr)
 
@@ -146,8 +151,8 @@ def main():
         print()
 
         if obs == "EnergyLArNoNoise":
-            print("Fit of the core resolution: (sigma/mu)^2 = a^2/E + b^2, linear in a^2 and b^2\n")
-            print("| Setup | a (% sqrt(GeV)) | b^2 (%^2) | b (%) | chi2/ndf |")
+            print("Empirical fit of the core resolution: (sigma/mu)^2 = A/E + B, linear in A and B, B not constrained\n")
+            print("| Setup | a = sqrt(A) (% sqrt(GeV)) | B (%^2) | B / error | chi2/ndf |")
             print("|---|---|---|---|---|")
             for s_, label in setups:
                 d = res[s_, obs]
@@ -157,14 +162,12 @@ def main():
                 (A, B), cov, chi2, ndf = fit_noise_free(energies, d[:, 0], d[:, 1])
                 dA, dB = np.sqrt(np.diag(cov))
                 a, da = math.sqrt(max(A, 0)), dA / (2 * math.sqrt(A)) if A > 0 else math.nan
-                if B > 2 * dB:
-                    b_txt = f"{100*math.sqrt(B):.2f} ± {100*dB/(2*math.sqrt(B)):.2f}"
-                else:  # compatible with 0: one-sided 95 % limit
-                    b_txt = f"< {100*math.sqrt(max(B, 0) + 1.645 * dB):.2f} (95 % CL)"
-                print(f"| {label} | {100*a:.2f} ± {100*da:.2f} | {1e4*B:+.3f} ± {1e4*dB:.3f} | {b_txt} | {chi2:.1f}/{ndf} |")
+                # B is reported as fitted: no b = sqrt(B) and no limit (see the docstring)
+                print(f"| {label} | {100*a:.2f} ± {100*da:.2f} | {1e4*B:+.3f} ± {1e4*dB:.3f} | {B/dB:+.1f} | {chi2:.1f}/{ndf} |")
                 res[s_, "fit"] = (A, B)
         else:
-            print("Fit of the noise term: (sigma/mu)^2 = a^2/E + b^2 + c^2/E^2, a and b fixed from the noise-free fit\n")
+            print("Fit of the noise term: (sigma/mu)^2 = A/E + B + c^2/E^2, A and B fixed from the noise-free fit")
+            print("(the error on c is conditional on A and B and does not include their uncertainty)\n")
             print("| Setup | c (GeV) | expected c (GeV) | chi2/ndf |")
             print("|---|---|---|---|")
             for s_, label in setups:
@@ -230,7 +233,7 @@ def plot(path, energies, setups, res):
             for side in ("top", "right"):
                 ax.spines[side].set_visible(False)
     axes[0, 0].legend(frameon=False, loc="upper right", labelcolor=INK2)
-    fig.suptitle("ATLLArBarrel: LAr energy resolution, 1000 e⁻ per point, η = 0.2 (lines: fits, see text)",
+    fig.suptitle("ATLLArBarrel: LAr energy resolution, 1000 e⁻ per point, η = 0.2 (lines: empirical fits, see text)",
                  color=INK, fontsize=12, x=0.01, ha="left")
     fig.tight_layout()
     fig.savefig(path, dpi=150, facecolor=SURFACE)

@@ -216,7 +216,8 @@ the CPU and calls `ProcessHits` on the worker thread of the event, before the en
    256 back cells; sizes in `include/ATLLArBarrelTBConstants.hh`). The cells are virtual: they are not volumes, so a
    cell boundary does not end a step, and the whole deposit goes to the cell of the pre-step point.
    `EnergyCrossCell` and `EnergyCrossSection` measure how much energy is in steps that end in another cell or
-   section ([Results.md](Results.md), section 1g).
+   section ([Results.md](Results.md), section 1g): they show which deposits the approximation concerns, not the size
+   of the resulting scoring error.
 3. **Raw and Birks accumulation.** `ApplyBirks` applies the ATLAS Birks law (constant field of 10 kV/cm) with the
    deposit and the step length; each hit accumulates the corrected and the raw energy.
 4. **Event flush** (`src/ATLLArBarrelEventAction.cc`). The SD creates the 1792 hits at every event; at the end of
